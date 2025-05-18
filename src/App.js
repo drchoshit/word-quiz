@@ -1,10 +1,11 @@
-// src/App.js
+// src/App.js (Firebase 연동 버전 - 배포 도메인 링크 적용)
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ExcelUpload from './ExcelUpload';
 import NameInput from './NameInput';
 import QuizPage from './QuizPage';
 import ResultPage from './ResultPage';
+import { saveQuizToFirebase, loadQuizFromFirebase } from './firebase-quiz';
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -16,25 +17,25 @@ function App() {
 
   const testId = searchParams.get('testId');
 
-  // 시험 ID가 있으면 로컬에서 해당 문제 로드
   useEffect(() => {
     if (testId) {
-      const stored = localStorage.getItem(`exam-${testId}`);
-      if (stored) {
-        setQuestions(JSON.parse(stored));
-        setStep('name');
-      } else {
-        alert('시험 ID가 유효하지 않거나 문제가 없습니다.');
-      }
+      loadQuizFromFirebase(testId).then((questionsFromDB) => {
+        if (questionsFromDB) {
+          setQuestions(questionsFromDB);
+          setStep('name');
+        } else {
+          alert('시험 ID가 유효하지 않거나 문제가 없습니다.');
+        }
+      });
     } else {
-      setStep('create'); // 시험 생성용 화면 보여줌
+      setStep('create');
     }
   }, [testId]);
 
   const handleExcelUpload = (q) => {
     const generatedId = `test-${Date.now()}`;
-    const link = `https://word-quiz-drchoshit.vercel.app/?testId=${generatedId}`;
-    localStorage.setItem(`exam-${generatedId}`, JSON.stringify(q));
+    const link = `https://word-quiz-eight.vercel.app/?testId=${generatedId}`; // 수정된 부분
+    saveQuizToFirebase(generatedId, q);
     setGeneratedLink(link);
     setQuestions(q);
     setStep('name');
@@ -54,7 +55,6 @@ function App() {
     <div>
       {step === 'create' && (
         <>
-          <h2 style={{ textAlign: 'center', marginTop: '2rem' }}>시험 문제 엑셀 파일 업로드</h2>
           <ExcelUpload onQuestionsReady={handleExcelUpload} />
           {generatedLink && (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
@@ -82,11 +82,7 @@ function App() {
       {step === 'name' && <NameInput onStart={startQuiz} />}
       {step === 'quiz' && <QuizPage questions={questions} onFinish={finishQuiz} />}
       {step === 'result' && <ResultPage username={username} score={score} />}
-      {step === 'loading' && (
-        <p style={{ textAlign: 'center', paddingTop: '2rem' }}>
-          시험 ID를 확인 중입니다... 잘못된 경로일 수 있어요.
-        </p>
-      )}
+      {step === 'loading' && <p style={{ textAlign: 'center', paddingTop: '2rem' }}>로딩 중...</p>}
     </div>
   );
 }
