@@ -1,4 +1,4 @@
-// src/App.js (시험 ID 기반 + 복사 가능한 링크 항상 표시)
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ExcelUpload from './ExcelUpload';
@@ -16,6 +16,7 @@ function App() {
 
   const testId = searchParams.get('testId');
 
+  // 시험 ID가 있으면 로컬에서 해당 문제 로드
   useEffect(() => {
     if (testId) {
       const stored = localStorage.getItem(`exam-${testId}`);
@@ -26,13 +27,13 @@ function App() {
         alert('시험 ID가 유효하지 않거나 문제가 없습니다.');
       }
     } else {
-      setStep('create');
+      setStep('create'); // 시험 생성용 화면 보여줌
     }
   }, [testId]);
 
   const handleExcelUpload = (q) => {
     const generatedId = `test-${Date.now()}`;
-    const link = `http://localhost:3000/?testId=${generatedId}`;
+    const link = `https://word-quiz-drchoshit.vercel.app/?testId=${generatedId}`;
     localStorage.setItem(`exam-${generatedId}`, JSON.stringify(q));
     setGeneratedLink(link);
     setQuestions(q);
@@ -51,9 +52,10 @@ function App() {
 
   return (
     <div>
-      {(step === 'create' || generatedLink) && (
+      {step === 'create' && (
         <>
-          {step === 'create' && <ExcelUpload onQuestionsReady={handleExcelUpload} />}
+          <h2 style={{ textAlign: 'center', marginTop: '2rem' }}>시험 문제 엑셀 파일 업로드</h2>
+          <ExcelUpload onQuestionsReady={handleExcelUpload} />
           {generatedLink && (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <p>시험 링크가 생성되었습니다! 아래 주소를 학생에게 전달하세요:</p>
@@ -80,7 +82,11 @@ function App() {
       {step === 'name' && <NameInput onStart={startQuiz} />}
       {step === 'quiz' && <QuizPage questions={questions} onFinish={finishQuiz} />}
       {step === 'result' && <ResultPage username={username} score={score} />}
-      {step === 'loading' && <p style={{ textAlign: 'center', paddingTop: '2rem' }}>로딩 중...</p>}
+      {step === 'loading' && (
+        <p style={{ textAlign: 'center', paddingTop: '2rem' }}>
+          시험 ID를 확인 중입니다... 잘못된 경로일 수 있어요.
+        </p>
+      )}
     </div>
   );
 }
