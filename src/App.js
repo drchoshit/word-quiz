@@ -1,4 +1,4 @@
-// src/App.js (Firebase 연동 버전 + Vercel 주소 반영)
+// src/App.js (Firebase 연동 + Vercel 주소 적용 버전)
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ExcelUpload from './ExcelUpload';
@@ -34,10 +34,8 @@ function App() {
 
   const handleExcelUpload = (q) => {
     const generatedId = `test-${Date.now()}`;
-    const origin = process.env.NODE_ENV === 'production'
-      ? 'https://word-quiz-eight.vercel.app'
-      : window.location.origin;
-    const link = `${origin}/?testId=${generatedId}`;
+    const baseUrl = process.env.REACT_APP_BASE_URL || window.location.origin;
+    const link = `${baseUrl}/?testId=${generatedId}`;
     saveQuizToFirebase(generatedId, q);
     setGeneratedLink(link);
     setQuestions(q);
